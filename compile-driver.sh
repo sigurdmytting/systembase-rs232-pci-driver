@@ -12,7 +12,7 @@ MODNAME=golden_tulip
 MODDIR=/lib/modules/$(uname -r)/kernel/drivers/char
 
 # where to find src (transfer to this directory with puppet
-SOURCE=/opt/sysbase
+SOURCE=/opt/sysbase/sysbas_mpdrv.v23.0
 
 if [ -f $MODDIR/$MODNAME.ko ]; then
     # if golden_tulip exists exit and dont think more about it
