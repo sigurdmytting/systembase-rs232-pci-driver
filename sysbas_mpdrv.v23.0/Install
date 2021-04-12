@@ -1,0 +1,96 @@
+# Multiport PCI/PCIe  
+# Installation Scripts 2009. 12.
+
+CLS=`clear` > /dev/null  2>&1
+
+
+./Remove > /dev/null  2>&1
+
+gcc -o sb_config sb_config.c 
+
+if [ -f "sb_config" ]
+then
+	echo "" > /dev/null 2>&1
+else
+	echo "Need to gcc complier"
+	exit 0
+fi
+
+make install > /dev/null 2>&1
+
+if [ -f "golden_tulip.o" ]
+then
+	echo "" > /dev/null 2>&1
+else
+	echo "Need to make or kernel-source or root acount"
+	exit 0
+fi
+
+modprobe golden_tulip > /dev/null  2>&1
+make -C ./async_multiport/ > /dev/null  2>&1
+make -C ./multidrop_test/ > /dev/null  2>&1
+make -C ./ioctl/ > /dev/null 2>&1
+
+echo -n "modify rc.local...."
+if [ -f "/etc/rc.local" ]
+then 
+	echo "location is /etc/rc.local"
+	RC=/etc/rc.local
+	RCORG=/etc/rc.local.org
+elif [ -f "/etc/rc.d/rc.local" ]
+then 
+	echo "location is /etc/rc.d/rc.local"
+	RC=/etc/rc.d/rc.local
+	RCORG=/etc/rc.d/rc.local.org
+elif [ -f "/etc/init.d/rc.local" ]
+then 
+	echo "location is /etc/init.d/rc.local"
+	RC=/etc/init.d/rc.local
+	RCORG=/etc/init.d/rc.local.org
+
+elif [ -f "/etc/rc.d/boot.local" ]
+then 
+	echo "location is /etc/rc.d/boot.local"
+	RC=/etc/rc.d/boot.local
+	RCORG=/etc/rc.d/boot.local.org
+elif [ -f "/etc/init.d/boot.local" ]
+then 
+	echo "location is /etc/init.d/boot.local"
+	RC=/etc/init.d/boot.local
+	RCORG=/etc/init.d/boot.local.org
+else
+	echo "creat /etc/rc.local"
+	cp rc.local /etc
+	RC=/etc/rc.local
+	RCORG=/etc/rc.local.org
+	cp rc-local.service /etc/systemd/system/
+	systemctl enable rc-local 2>/dev/null
+fi
+
+cp sb_mp /etc/sb_mp
+chmod 777 /etc/sb_mp
+
+cp $RC $RCORG
+grep -vx 'exit 0' < $RCORG > $RC
+rm -f $RCORG
+echo "/etc/sb_mp" >> $RC
+echo "exit 0" >> $RC
+
+chmod +x $RC
+
+if [ -f "/proc/tty/driver/golden_tulip" ]
+then
+	cat /proc/tty/driver/golden_tulip
+fi
+
+echo "MultiPort Driver Install...done"
+./sb_config 
+
+make clean > /dev/null  2>&1
+
+rm -f *.c
+rm -f *.h
+rm -f Makefile
+rm -f rc.local
+
+#Install end

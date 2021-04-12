@@ -1,0 +1,78 @@
+# Multiports/PCI 
+# Remove script
+
+CLS=`clear` > /dev/null 2>&1
+
+echo $CLS
+echo -e "\nRemove Multiports PCI/PCIe Driver..!!"
+
+make clean > /dev/null 2>&1;
+make -C ./async_multiport/ clean > /dev/null 2>&1;
+make -C ./ioctl/ clean > /dev/null 2>&1;
+make -C ./multidrop_test/ clean > /dev/null 2>&1;
+
+modprobe -r golden_tulip > /dev/null 2>&1
+
+#########   Modify by jhyoo ###########
+# remove module object
+rm -f /lib/modules/$(uname -r)/kernel/drivers/char/golden_tulip.ko
+rm -f /lib/modules/$(uname -r)/misc/golden_tulip.ko
+rm -f /lib/modules/$(uname -r)/kernel/drivers/char/golden_tulip.o
+rm -f /lib/modules/$(uname -r)/misc/golden_tulip.o
+depmod -a
+#######################################
+
+
+#echo " "
+#echo -n "remove node(/etc/inittab) ....."
+#cp /etc/inittab /etc/inittab.old
+#grep -v 'ttyMP' < /etc/inittab.old > /etc/inittab
+#rm -f /etc/inittab.old
+#echo -e "done"
+
+echo -n "remove device(/dev)....."
+rm -f /dev/ttyMP*
+echo -e "done"
+
+RC=/etc/rc.d/rc
+RCORG=/etc/rc.d/rc.org
+
+echo -n "modify rc.local..."
+
+if [ -f "/etc/rc.d/rc.local" ]
+then 
+	RC=/etc/rc.d/rc.local
+	RCORG=/etc/rc.d/rc.local.org
+elif [ -f "/etc/init.d/rc.local" ]
+then 
+	RC=/etc/init.d/rc.local
+	RCORG=/etc/init.d/rc.local.org
+
+elif [ -f "/etc/rc.local" ]
+then 
+	RC=/etc/rc.local
+	RCORG=/etc/rc.local.org
+elif [ -f "/etc/rc.d/boot.local" ]
+then 
+	RC=/etc/rc.d/boot.local
+	RCORG=/etc/rc.d/rc.boot.org
+elif [ -f "/etc/init.d/boot.local" ]
+then 
+	RC=/etc/init.d/rc.boot
+	RCORG=/etc/init.d/rc.boot.org
+fi
+
+cp $RC $RCORG
+grep -v 'modprobe golden_tulip' < $RCORG > $RC
+rm -f $RCORG
+
+cp $RC $RCORG
+grep -v '/etc/sb_mp' < $RCORG > $RC
+rm -f $RCORG
+
+
+rm -f /etc/sb_mp
+rm -f sb_config sb_config.o
+echo -e "location is" $RC "....done"
+echo "Remove done"
+
